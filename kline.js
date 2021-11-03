@@ -2,6 +2,11 @@ function loadData()
 {
     let barperiod = 1;//period based on second
 
+
+    //test moment
+    //let now = moment();
+
+
     let input = document.createElement('input');
     input.type = 'file';
     input.onchange = _ => {
@@ -47,19 +52,32 @@ function buildBar(tickdata, barperiod)
         
     if(firststrs.length == 4)
     {
-      time = new Date(firststrs[0] + " " + firststrs[1]);
+      time = moment(firststrs[0] + " " + firststrs[1], "MM/DD/YYYY HH:mm:ss");
       bid = Number(firststrs[2]);
       ask = Number(firststrs[3]);
     }
     else if(firststrs.length == 5)
     {
-      time = new Date(firststrs[0] + " " + firststrs[1] + "." + firststrs[2]);
+      //time = new Date(firststrs[0] + " " + firststrs[1] + "." + firststrs[2]);
+      time = moment(firststrs[0] + " " + firststrs[1] + "." + firststrs[2], "MM/DD/YYYY HH:mm:ss.SSS");
       bid = Number(firststrs[3]);
       ask = Number(firststrs[4]);
     }
 
-    let firstTime = time.getDate()
 
+    if(time.hour() >= 16)
+    {
+      let modifyTime = time.hour(16).minute(0).second(0).millisecond(0);
+      let firstBar = new Bar(modifyTime, bid, ask);
+      bars.push(firstBar);
+    }
+    else
+    {
+      let modifyTime = time.hour(16).minute(0).second(0).millisecond(0);
+      let firstBar = new Bar(modifyTime, bid, ask);
+      bars.push(firstBar);
+    }
+    
 
     for(var i=0; i<length; i++)
     {
@@ -88,10 +106,6 @@ function buildBar(tickdata, barperiod)
 
 class Bar
 {
-  constructor()
-  {
-
-  }
 
   constructor(time, bid, ask)
   {
@@ -123,16 +137,16 @@ class Bar
 
   clone()
   {
-    let newBar = new Bar();
-    newBar.askOpen = bar.askOpen;
-    newBar.askHigh = bar.askHigh;
-    newBar.askLow = bar.askLow;
-    newBar.askClose = bar.askClose;
-    newBar.bidOpen = bar.bidOpen;
-    newBar.bidHigh = bar.bidHigh;
-    newBar.bidLow = bar.bidLow;
-    newBar.bidClose = bar.bidClose;
-    newBar.time = bar.time;
+    let newBar = new Bar(this.time, this.askOpen, this.bidOpen);
+    newBar.askOpen = this.askOpen;
+    newBar.askHigh = this.askHigh;
+    newBar.askLow = this.askLow;
+    newBar.askClose = this.askClose;
+    newBar.bidOpen = this.bidOpen;
+    newBar.bidHigh = this.bidHigh;
+    newBar.bidLow = this.bidLow;
+    newBar.bidClose = this.bidClose;
+    newBar.time = this.time;
     return newBar;
   }
 }
