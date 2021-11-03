@@ -1,6 +1,6 @@
 function loadData()
 {
-    let barperiod = 1;//period based on second
+    let barperiod = 60;//period based on second
 
 
     //test moment
@@ -19,7 +19,7 @@ function loadData()
                 reader.readAsText(file);
 
                 reader.onload = function() {
-                  let tickdata = reader.result;
+                  let tickdata = reader.result.split(/[\r\n]+/g);
                   let bars = buildBar(tickdata, barperiod);
                 };
               
@@ -67,16 +67,29 @@ function buildBar(tickdata, barperiod)
 
     if(time.hour() >= 16)
     {
-      let modifyTime = time.hour(16).minute(0).second(0).millisecond(0);
+      //let modifyTime = time.hour(16).minute(0).second(0).millisecond(0);
+      //console.log(time.format("MM/DD/YYYY HH:mm:ss.SSS"))
+
+      // let modifyTime = time.milliseconds(0);
+      //both time and modifytime change
+      // console.log(modifyTime.format("MM/DD/YYYY HH:mm:ss.SSS") +",before:" + time.format("MM/DD/YYYY HH:mm:ss.SSS"))
+
+      let modifyTime = moment(time).milliseconds(0);
+      //only modifytime change
+      //console.log(modifyTime.format("MM/DD/YYYY HH:mm:ss.SSS") +",before:" + time.format("MM/DD/YYYY HH:mm:ss.SSS"))
+
       let firstBar = new Bar(modifyTime, bid, ask);
       bars.push(firstBar);
     }
     else
     {
-      let modifyTime = time.hour(16).minute(0).second(0).millisecond(0);
+      //let modifyTime = time.hour(16).minute(0).second(0).millisecond(0).add(-1, 'days');
+      let modifyTime = time.set({hour:16, minute:0, second:0, millisecond:0}).add(-1, 'days');
       let firstBar = new Bar(modifyTime, bid, ask);
       bars.push(firstBar);
     }
+
+    //console.log(bars[0].toString());
     
 
     for(var i=0; i<length; i++)
@@ -85,13 +98,13 @@ function buildBar(tickdata, barperiod)
         
         if(strs.length == 4)
         {
-          time = new Date(strs[0] + " " + strs[1]);
+          time = moment(strs[0] + " " + strs[1], "MM/DD/YYYY HH:mm:ss");
           bid = Number(strs[2]);
           ask = Number(strs[3]);
         }
         else if(strs.length == 5)
         {
-          time = new Date(strs[0] + " " + strs[1] + "." + strs[2]);
+          time = moment(strs[0] + " " + strs[1] + "." + strs[2], "MM/DD/YYYY HH:mm:ss.SSS");
           bid = Number(strs[3]);
           ask = Number(strs[4]);
         }
@@ -100,8 +113,31 @@ function buildBar(tickdata, barperiod)
           continue;
         }
 
+        let duration = moment.duration(time.diff(bars[bars.length-1].time));
+
+        if(duration.asSeconds() >= barperiod)
+        {
+          let nextperiodTime= moment(bars[bars.length-1].time);
+          while(moment.duration(time.diff(nextperiodTime)).asSeconds() >= barperiod)
+          {
+            nextperiodTime = moment(nextperiodTime).add(barperiod, "seconds");
+            let addBar = new Bar(nextperiodTime, bars[bars.length-1].bidClose, bars[bars.length-1].askClose);
+            bars.push(addBar);
+          }
+          bars[bars.length-1].upate(bid,ask);
+        }
+        else
+        {
+          bars[bars.length-1].upate(bid, ask);
+        }
     }
-    
+
+    bars.forEach(function(bar)
+    {
+      console.log(bar.toString());
+    });
+
+    return bars;
 }
 
 class Bar
@@ -123,21 +159,42 @@ class Bar
   upate(bid, ask)
   {
     //update high
-    this.askHigh = this.askHigh > ask ? askHigh : ask;
-    this.bidHigh = this.bidHigh > bid ? bidHigh : bid;
+    this.askHigh = this.askHigh > ask ? this.askHigh : ask;
+    this.bidHigh = this.bidHigh > bid ? this.bidHigh : bid;
 
     //update low 
-    this.askLow = this.askLow < ask ? askLow : ask;
-    this.bidLow = this.bidLow < bid ? bidLow : bid;
+    this.askLow = this.askLow < ask ? this.askLow : ask;
+    this.bidLow = this.bidLow < bid ? this.bidLow : bid;
 
     //update close
     this.askClose = ask;
     this.bidClose = bid;
   }
 
+  // GoT.prototype.toString = function() { 
+  //   return ''+this.name;
+  // }
+  toString()
+  {
+    //
+    
+    let res =  this.time.format("MM/DD/YYYY HH:mm:ss.SSS")+","+
+            this.bidOpen +","+
+            this.bidHigh+","+
+            this.bidLow + "," + 
+            this.bidClose+ "," + 
+            this.askOpen + "," + 
+            this.askHigh+ "," + 
+            this.askLow + "," + 
+            this.askClose;
+
+    return res;
+  }
+
+
   clone()
   {
-    let newBar = new Bar(this.time, this.askOpen, this.bidOpen);
+    let newBar = new Bar(moment(this.time), this.askOpen, this.bidOpen);
     newBar.askOpen = this.askOpen;
     newBar.askHigh = this.askHigh;
     newBar.askLow = this.askLow;
@@ -146,7 +203,22 @@ class Bar
     newBar.bidHigh = this.bidHigh;
     newBar.bidLow = this.bidLow;
     newBar.bidClose = this.bidClose;
-    newBar.time = this.time;
     return newBar;
   }
+}
+
+Bar.prototype.toString = function()
+{
+  let res =  this.time.format("MM/DD/YYYY HH:mm:ss.SSS")+","+
+  this.bidOpen +","+
+  this.bidHigh+","+
+  this.bidLow + "," + 
+  this.bidClose+ "," + 
+  this.askOpen + "," + 
+  this.askHigh+ "," + 
+  this.askLow + "," + 
+  this.askClose;
+
+  return res;
+
 }
