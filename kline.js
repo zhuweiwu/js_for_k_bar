@@ -21,6 +21,8 @@ function loadData()
                 reader.onload = function() {
                   let tickdata = reader.result.split(/[\r\n]+/g);
                   let bars = buildBar(tickdata, barperiod);
+
+
                 };
               
                 reader.onerror = function() {
@@ -28,6 +30,31 @@ function loadData()
                 };
             };
     input.click();
+}
+
+
+function drawCanvas(canvas, bars)
+{
+  let ctx;
+  let cWidth, cHeight, cMargin, cSpace;
+  let originX, originY;
+
+  let bMargin, totalBars, bWidth, maxValue, minValue;
+
+  let totalYNumber;
+  let showArr;
+
+  let dragBarX, dragBarWidth;
+
+  let ctr, numctr, speed;
+
+  let mousePosition = {};
+
+  ctx = canvas.getContext("2d");
+
+  
+
+
 }
 
 
@@ -140,6 +167,7 @@ function buildBar(tickdata, barperiod)
     return bars;
 }
 
+
 class Bar
 {
 
@@ -220,5 +248,4 @@ Bar.prototype.toString = function()
   this.askClose;
 
   return res;
-
 }
