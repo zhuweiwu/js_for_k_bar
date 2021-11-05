@@ -29,18 +29,18 @@
         {
             height: 500px;
             width: 100%;
-            background-color:lightgreen;
+            background-color:#161b26;
             margin:  0;
             padding: 0;
             position: relative;
         }
         
-        .canvas
+        .mycanvas
         {
             width:80%;
             height: 100%;
             margin: auto;
-            background-color: lightslategray;
+            /* background-color: lightslategray; */
             position: absolute;
             top: 0;
 		    left: 0;
@@ -58,8 +58,8 @@
     <div class="headdiv">
         <button class="btn" onclick="loadData()">Load</button>
     </div>
-    <div class="contentdiv">
-        <canvas class="canvas">
+    <div class="contentdiv" id="cbox">
+        <canvas class="mycanvas" id="mycanvas">
 
         </canvas>
     </div>
