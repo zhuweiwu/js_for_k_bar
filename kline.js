@@ -78,7 +78,7 @@ function loadFileFromTest()
 
 function loadDataFromFile()
 {
-  let barperiod = 1800;//period based on second
+  let barperiod = 300;//period based on second
 
   let input = document.createElement('input');
     input.type = 'file';
@@ -131,11 +131,7 @@ function drawCanvas(canvas, dataArr)
   initCanvas();
   function initCanvas()
   {
-
     cMargin = 60;
-
-    //cSpace = 80;
-
     cSpace = 80;
 
     console.log("cbox width = " + cbox.offsetWidth + ", height=" + cbox.offsetHeight);
@@ -158,9 +154,10 @@ function drawCanvas(canvas, dataArr)
     showArr = dataArr.slice( 0,parseInt(dataArr.length/2) );
  
     // 柱状图信息
-    tobalBars = showArr.length;
+    tobalBars = dataArr.length;
+    console.log("total bars = " + totalBars);
     bWidth = parseInt( cWidth/tobalBars/3);
-    bMargin = parseInt( (cWidth-bWidth*tobalBars)/(tobalBars+1) );
+    bMargin = parseInt( (cWidth-bWidth*tobalBars)/(tobalBars+1));
     //算最大值，最小值
     maxValue = 0;
     minValue = 9999999;
@@ -192,11 +189,13 @@ function drawCanvas(canvas, dataArr)
     dragBarWidth = 30;
     dragBarX = cWidth/2+cSpace+cMargin-dragBarWidth/2;  
   }
-  
+
+ 
   drawLineLabelMarkers(); // 绘制图表轴、标签和标记
   // 绘制图表轴、标签和标记
   function drawLineLabelMarkers(){
-      ctx.font = "24px Arial";
+      ctx.font = "14px Arial";
+      
       ctx.lineWidth = 2;
       ctx.fillStyle = "#b2b5be";
       ctx.strokeStyle = "#b2b5be";
@@ -227,7 +226,7 @@ function drawCanvas(canvas, dataArr)
               var markerVal =  parseInt(i*oneVal+minValue) / 100000.0;
               var markerLineVal = parseInt(i*oneVal+minValue);
               var xMarker = originX-10;
-              var yMarker = parseInt( originY-cHeight*(markerLineVal-minValue)/(maxValue-minValue));
+              var yMarker = parseInt(originY-cHeight*(markerLineVal-minValue)/(maxValue-minValue));
 
               ctx.fillText(markerVal, xMarker, yMarker+3, cSpace); // 文字
 
@@ -252,10 +251,10 @@ function drawCanvas(canvas, dataArr)
           // 绘制标题 y
           ctx.save();
           ctx.rotate(-Math.PI/2);
-          ctx.fillText("指 数", -canvas.height/2, cSpace-20);
+          ctx.fillText("Price", -canvas.height/2, cSpace-30);
           ctx.restore();
           // 绘制标题 x
-          ctx.fillText("日 期", originX+cWidth/2, originY+cSpace-20);
+          ctx.fillText("Time", originX+cWidth/2, originY+cSpace-20);
       };
   }
 
@@ -281,21 +280,26 @@ function drawCanvas(canvas, dataArr)
             disY = data[0]-data[3];
           }
 
-          var showH = disY/(maxValue-minValue)*cHeight*parsent;
+          //var showH = disY/(maxValue-minValue)*cHeight*parsent;
+          var showH = disY/(maxValue-minValue)*cHeight;
           showH = showH>2 ? showH : 2;
           
+          //console.log("index=" + i + ",barH=" + cHeight*(barVal-minValue)/(maxValue-minValue));
           var barH = parseInt(cHeight*(barVal-minValue)/(maxValue-minValue));//?has problem
-          console.log("index=" + i + ",disY="+disY + ",showH=" + showH + ",barH=" + barH);
+          //console.log("index=" + i + ",cHeight="+cHeight + ",barVal=" + barVal + ",maxValue=" + maxValue + ",minValue="+ minValue + ",percent=" + (barVal-minValue)/(maxValue-minValue));
+
           var y = originY - barH;
           var x = originX + ((bWidth+bMargin)*i + bMargin)*parsent;
-
+          //console.log("index=" + i + ",x="+x + ",y=" + y + ",showH=" + showH + ",orgY="+ originY + ",barH=" + barH);
           drawRect( x, y, bWidth, showH, mouseMove, color,true);  //开盘收盘  高度减一避免盖住x轴
 
           //最高最低的线
-          showH = (data[1]-data[2])/(maxValue-minValue)*cHeight*parsent;
+          //showH = (data[1]-data[2])/(maxValue-minValue)*cHeight*parsent;
+          showH = (data[1]-data[2])/(maxValue-minValue)*cHeight;
           showH = showH>2 ? showH : 2 ;
 
           y = originY - parseInt(cHeight*(data[1]-minValue)/(maxValue-minValue));
+          console.log("index=" + i + ",y=" + y + ",originY=" + originY + ",high="+ data[1] + ",minValue=" + minValue);
           drawRect( parseInt(x+bWidth/2-1), y, 2, showH, mouseMove, color);  //最高最低  高度减一避免盖住x轴
       }
       if(ctr<numctr){
@@ -325,6 +329,10 @@ function drawCanvas(canvas, dataArr)
       if( parseInt(Y)%2 !== 0){
           Y += 1;
       }
+
+      console.log("x=" + x + ",y=" + y + ",X=" + X + ",Y=" + Y);
+
+      //Y positive is down, negtive is up
       ctx.rect( parseInt(x), parseInt(y), parseInt(X), parseInt(Y) );
 
       if(ifBigBar && mouseMove && ctx.isPointInPath(mousePosition.x*2, mousePosition.y*2)){ //如果是鼠标移动的到柱状图上，重新绘制图表
@@ -389,7 +397,7 @@ function buildBar(tickdata, barperiod)
       //both time and modifytime change
       // console.log(modifyTime.format("MM/DD/YYYY HH:mm:ss.SSS") +",before:" + time.format("MM/DD/YYYY HH:mm:ss.SSS"))
 
-      let modifyTime = moment(time).milliseconds(0);
+      let modifyTime = moment(time).set({hour:16, minute:0, second:0, millisecond:0});
       //only modifytime change
       //console.log(modifyTime.format("MM/DD/YYYY HH:mm:ss.SSS") +",before:" + time.format("MM/DD/YYYY HH:mm:ss.SSS"))
 
@@ -399,7 +407,7 @@ function buildBar(tickdata, barperiod)
     else
     {
       //let modifyTime = time.hour(16).minute(0).second(0).millisecond(0).add(-1, 'days');
-      let modifyTime = time.set({hour:16, minute:0, second:0, millisecond:0}).add(-1, 'days');
+      let modifyTime =  moment(time).set({hour:16, minute:0, second:0, millisecond:0}).add(-1, 'days');
       let firstBar = new Bar(modifyTime, bid, ask);
       bars.push(firstBar);
     }
@@ -462,16 +470,15 @@ function formatData(bars)
   {
     var temp = [ bars[i].time.format("MM/DD/YYYY HH:mm:ss") , 
                 [parseInt(bars[i].askOpen * 100000), parseInt(bars[i].askHigh * 100000), 
-                 parseInt(bars[i].askLow* 100000), parseInt(bars[i].askClose * 100000)]
+                 parseInt(bars[i].askLow * 100000), parseInt(bars[i].askClose * 100000)]
                ];
 
     dataArr.push(temp);
   }
 
-  for(var i=0; i<bars.length; i++)
+  for(var i=0; i<dataArr.length; i++)
   {
-    console.log(bars[i].toString());
-
+    console.log("index=" + i + "," + dataArr[i][0] + "," + dataArr[i][1][0] + "," + dataArr[i][1][1] + "," + dataArr[i][1][2] + "," + dataArr[i][1][3]);
   }
   return dataArr;
 }
